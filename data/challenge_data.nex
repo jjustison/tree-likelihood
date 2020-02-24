@@ -1,0 +1,11 @@
+#NEXUS 
+
+Begin data;
+	Dimensions ntax=3 nchar=1;
+	Format datatype=dna gap=- missing=?;
+	Matrix
+t1  		T
+t2  		C
+t3     		A
+;
+End;

@@ -5,16 +5,14 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 
-```
 
 ## Reading And Working With The Data
 
 First, let's read in the data and see how it is represented. For reading in the tree I'm going to take advantage of the `read.tree()` function from the **ape** package because writing a function for reading in a tree is a pain. If you're interested in how to write a tree reading function I'd recommend checking out Paul Lewis' tutorial for [building phylogenetic software](https://stromtutorial.github.io/), it also serves as a good introduction to C++. As for reading in the sequence data, we will be using the `read.nexus.data()` function in **ape**.
 
-```{r,warning=FALSE}
+
+```r
 ##Load in relevant packages
 library(ape) ##This package has a lot of tree-related functions and has the 'phylo' class
 
@@ -25,21 +23,39 @@ source("./challenge_fxns.R")
 ##read in our files 
 tree<-read.tree("../data/challenge_tree.tree")
 seq<-read.nexus.data("../data/challenge_data.nex")
-
 ```
 
 Cool beans! Now let's see how the data are represented in R. Let's start with the tree.
 
 ###The Tree
 
-```{r}
 
-
+```r
 print(tree)##We can see some basic information by just printing our tree
+```
 
+```
+## 
+## Phylogenetic tree with 3 tips and 2 internal nodes.
+## 
+## Tip labels:
+## [1] "t1" "t2" "t3"
+## 
+## Rooted; includes branch lengths.
+```
+
+```r
 str(tree)##We can see the attributes and class of our tree by using the str() function
+```
 
-
+```
+## List of 4
+##  $ edge       : int [1:4, 1:2] 4 5 5 4 5 1 2 3
+##  $ edge.length: num [1:4] 0.1 0.1 0.1 0.1
+##  $ Nnode      : int 2
+##  $ tip.label  : chr [1:3] "t1" "t2" "t3"
+##  - attr(*, "class")= chr "phylo"
+##  - attr(*, "order")= chr "cladewise"
 ```
 
 By printing out the tree we can see that we have a rooted tree with 3 tips and branch lengths, this is what we want and a good sanity check.
@@ -52,24 +68,37 @@ when we used the `str()` function we could see that the tree was of class *phylo
 * **tip.label:**A vector of the tip names are stored here. Each element corresponds to the node numbered with that index. E.g. the 2^nd^ element in *tip.label* corresponds to the name of the node that is numbered $2$
 
 We can access the indivudal attributes of the tree by typing our variable followed by *$* and then the name of the attribute. For example:
-```{r}
+
+```r
 tree$edge
+```
+
+```
+##      [,1] [,2]
+## [1,]    4    5
+## [2,]    5    1
+## [3,]    5    2
+## [4,]    4    3
 ```
 
 We can also plot our tree along with its branch lengths to check if we loaded things in correctly
 
-```{r}
+
+```r
 {
   plot(tree)
   edgelabels(tree$edge.length)
 }
 ```
 
+![](Tree_likelihood_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
 The Newick format for this tree is `((t1:0.1,t2:0.1):0.1,t3:0.1);`, so it looks like the tree is correct.
 
 
 From the *edge* attribute we can see that nodes and branches are numbered. Alternatively, we can plot the node and edge numberings on the tree.
-```{r}
+
+```r
 {
   plot(tree,show.tip.label = FALSE)
   edgelabels()
@@ -78,6 +107,8 @@ From the *edge* attribute we can see that nodes and branches are numbered. Alter
 }
 ```
 
+![](Tree_likelihood_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
 We have things plotted such that:
 
 * **Edge Numbers** are denoted with $\color{green}{\text{green}}$
@@ -85,8 +116,13 @@ We have things plotted such that:
 * **Tip Node Numbers** are denoted with $\color{yellow}{\text{yellow}}$
 
 This plotting is also a good place to make better sense of the *edge* matrix attribute.
-```{r, echo=F}
-tree$edge
+
+```
+##      [,1] [,2]
+## [1,]    4    5
+## [2,]    5    1
+## [3,]    5    2
+## [4,]    4    3
 ```
 We can see that the second row, denoted by $[2,]$, has $5$ and $1$ in the columns. We can look at our plot and find the branch labeled with a $2$ and see that it is connected to nodes labeled $5$ and $1$. 
 
@@ -94,8 +130,16 @@ We can also notice that the ordering the columns matters. Node numbers that appe
 
 ###The Sequence Data
 Similar things can be done for the sequence data to get a feel for how it is represented.
-```{r}
+
+```r
 str(seq)
+```
+
+```
+## List of 3
+##  $ t1: chr "t"
+##  $ t2: chr "c"
+##  $ t3: chr "a"
 ```
 Here we can see that we have a list where each attribute in the list corresponds to one of our tip names. Then, within each list is our sequence information. Usually each attribute contains a vector of characters, however, we only read in an allignment with one character. 
 
@@ -105,7 +149,8 @@ Before we get into the meat and potatoes that is the pruning algorithm, we will 
 * `isTip(phy,nd)`: this function returns `TRUE` if the given node is a tip and `FALSE` otherwise.This function has two inputs:
     + $phy$: the phylogenetic tree  
     + $nd$: the number of the node that we are interested in
-```{r,eval=FALSE}
+
+```r
 ###Example###
 isTip(tree,2) ##Returns TRUE
 isTip(tree,4) ##Returns FALSE
@@ -114,22 +159,24 @@ isTip(tree,4) ##Returns FALSE
 * `getChildren(phy,nd)`: This function finds the child node numbers of a given node on a tree. This function has two inputs:
     + $phy$: the phylogenetic tree  
     + $nd$: the number of the node that we are interested in
-```{r,eval=FALSE}
+
+```r
 ###Example###
 getChildren(tree,4) ##Returns 5 3  
 getChildren(tree,2) ##The node is a tip and has no children. Returns NULL
-```    
+```
 
 
 * `getBranchLength(phy,nd)`: This function returns the length of the branch the leads to the parent of a given node. This function has two inputs:
     + $phy$: the phylogenetic tree  
     + $nd$: the number of the node that we are interested in
-```{r,eval=FALSE}
+
+```r
 ###Example###
 getBranchLength(tree,3) ##Returns 0.1
 getBranchLength(tree,5) ##Returns 0.1
 getBranchLength(tree,4) ##The root has no branch that leads to it. Returns NULL
-```  
+```
 
 * `subst_probsJC(i,j,v)`: This function computes the probability that a site transitions from nucleotide $i$ to nucleotide $j$ along a branch with length $\nu$. The probabilities are calculated according to the Jukes Cantor model of sequence evolution:
 $$
@@ -144,7 +191,8 @@ This function has three inputs:
     + $i$: A string containing the starting nucleotide. Either `"a"`, `"c"`, `"g"`, or `"t"`
     + $j$: A string containing the ending nucleotide. Either `"a"`, `"c"`, `"g"`, or `"t"`
     + $\nu$: a non-negative floating point number that represents the expected number of substitutions along a branch.
-```{r,eval=FALSE}
+
+```r
 ###Example###
 subst_probsJC("a","g",0.5) ##Returns 0.6350628
 subst_probsJC("a","a",0.5) ##Returns 0.1216457
@@ -155,20 +203,32 @@ A_C<-subst_probsJC("a","c",0.5)  #A to C
 A_G<-subst_probsJC("a","g",0.5)  #A to G
 A_T<-subst_probsJC("a","t",0.5)  #A to T
 A_A+A_C+A_G+A_T ##Returns 1. This is a sanity check. The probability of transitioning from A to any other base should be 1.
-```  
+```
 
 * `siteSeqs2Likelihood(alignment, site_no)`: This function take the observed nucleotide data at the tips for a given site and converts it into a likelihood format that our other functions can use to compute likelihoods for internal nodes. This function has two inputs:
     + $alignment$: a list of aligned sequences  
     + $site\_no$: the position of the alignment that we want ot put into a likelihood format 
-```{r}
 
+```r
 ###Example###
 lik_seq<-siteSeqs2Likelihood(seq,1) ##put the first site of our alignment into the correct format
 
 ##We made a list where each tip name is an attribute that contains a vector with a 1 for the observed base and 0s everywhere else
 lik_seq 
+```
 
-
+```
+## $t1
+## a c g t 
+## 0 0 0 1 
+## 
+## $t2
+## a c g t 
+## 0 1 0 0 
+## 
+## $t3
+## a c g t 
+## 1 0 0 0
 ```
 
 * `nodeLikelihood(l1,l2,v1,v2,sub_model=subst_probsJC)`: This function computes the conditional probability of each nucleotide for the ancestral node given the likelihood of the nucleotides at the ancestral nodes and given the branch lengths that lead to each ancestral node. The likelihood of the ancestor node, denoted $anc$, for a given base $i$ is computed as follows:
@@ -181,7 +241,8 @@ $$
     + $\nu_{1}$, $\nu_{2}$: The expected number of substitutions along the two branches that lead to the descendent nodes
     + $sub\_model$: The model for sequence evolution. The default value is the Jukes Cantor model of sequence evolution, `subst_probsJC`
 
-```{r}
+
+```r
 ###Example###
 
 ##compute the likelihood of each base for the node numbered 5 in our tree
@@ -199,10 +260,15 @@ v2<-getBranchLength(tree,2) ##branch length for the branch between nodes 5 and 2
 
 node5_lik<-nodeLikelihood(node1_lik,node2_lik,v1,v2,sub_model=subst_probsJC) ##compute the likelihood of each base for node 5
 node5_lik
+```
+
+```
+##            a            c            g            t 
+## 0.0009738563 0.0282851014 0.0009738563 0.0282851014
+```
+
+```r
 ##These numbers look like what we saw in lecture! Nice!
-
-
-
 ```
 
 ##The Pruning Algorithm
@@ -218,45 +284,51 @@ We should now have all the infrastructure we need to compute the site likelihood
 For step 1. we can use the `nodeLikelihood()` function to compute the likelihood for each base at the root, the node numbered $4$. However, in order to do this we need the likelihood at each of the descendent nodes, the nodes numbered $3$ and $5$. 
 
 The likelihood for node $3$ is straightforward, it is a tip and we have observed data for that node. As such, we can just convert the sequence data into a likelihood format for that node. 
-```{r}
+
+```r
 node3_lik<-lik_seq$t3 ##get the likelihood for node 3
 ##We stored
 ## a c g t 
 ## 1 0 0 0
 
 v3<-getBranchLength(tree,3) ##also get the branch length that connects nodes 4 and 3
-
-
 ```
 
 
 Node $5$ is a bit more tricky since this isn't a tip. In order to get the likelihood for the bases at node $5$ we need to use the `nodeLikelihood()` function again but this time on node $5$ where nodes $1$ and $2$ are the descendents. Luckily, we already did this computation in the example for `nodeLikelihood()`.
-```{r}
 
+```r
 ###See the example for nodeLikelihood to see the likelihood computation for node 5
 
 ##The likelihood is stored in a variable called node5_lik
 v5<-getBranchLength(tree,5) ##also get the branch length that connects nodes 4 and 5
-
 ```
 
 We only need to plug in values to calculate the base likelihoods at the root
-```{r}
+
+```r
 root_lik<-nodeLikelihood(node3_lik,node5_lik,v3,v5,subst_probsJC) ##compute the likelihood at the root for each base
 root_lik #These numbers look like what we saw in class!
+```
 
+```
+##            a            c            g            t 
+## 2.427687e-03 8.294894e-04 8.358527e-05 8.294894e-04
 ```
 
 So we've calculated the likelihood for each base, now for step 2. we need to multiply these by their stationary frequencies. The Jukes Cantor model assumes stationary frequencies of $A=C=G=T=0.25$. After we do this multiplication we only need to sum the values together to get the site likelihood
 
-```{r}
+
+```r
 stationary_freqs<-c(0.25,0.25,0.25,0.25) ##The stationary frequencies are all 0.25
 site_lik<-root_lik*stationary_freqs ##multiply by stationary frequencies
 
 site_lik<-sum(site_lik) ##add all values together
 site_lik  #what a beaut
+```
 
-
+```
+## [1] 0.001042563
 ```
 We done did it! Although we did the calculations by hand, hopefully this example gives somewhat of an idea for how this process can be applied more generally. Because, while this may be somewhat easy to do for a single site with 3 taxa, doing these calculations manually quickly becomes cumbersome as the number of taxa and length of sequences grow. We will want to write a recursive algorithm to automate the process of going thru the nodes to compute likelihoods and slowly work our way to the root.
 
@@ -272,8 +344,8 @@ Let's start by first writing a wrapper function that does some of the housekeepi
   + $sub\_model$: A substitution model for sequence evolution
   + $stat\_freqs$: The stationary frequencies for each nucleotide. Frequencies are ordered A,C,T,G.
 
-```{r,eval=FALSE}
 
+```r
 ##Compute the site likelihood
 siteLikelihood<-function(phy,tip_lik,sub_model,stat_freqs){
   
@@ -290,7 +362,6 @@ siteLikelihood<-function(phy,tip_lik,sub_model,stat_freqs){
   
   return(site_lik)
 }
-
 ```
 This wrapper function is actually pretty short and sweet. However, we still need to define our recursive function, `getLikeLihoodRecursive()`. If we assume it works properly we can see that we are just getting the likelihood at the root and doing the same calculations as when we did things manually.
 
@@ -309,8 +380,8 @@ Alright, now onto the function. `getLikelihoodRecursive()` will get us the likel
   + $tip\_lik$: the sequence data of the tips, all in the likelihood format given by `siteSeqs2Likelihood()`
   + $sub\_model$: A substitution model for sequence evolution.
   
-```{r,eval=FALSE}
 
+```r
 ##Compute the likelihood for each nucleotide at a given node
 getLikelihoodRecursive<-function(nd,phy,tip_lik,sub_model){
   
@@ -339,11 +410,11 @@ getLikelihoodRecursive<-function(nd,phy,tip_lik,sub_model){
   }
     return(lik)
 }
-
 ```
 
 
-```{r,eval=FALSE}
+
+```r
 ###Example
 getLikelihoodRecursive(1,tree,lik_seq,subst_probsJC) ##Gets the likelihood at node 1 which is a tip.
 ##Returns
@@ -354,15 +425,12 @@ getLikelihoodRecursive(5,tree,lik_seq,subst_probsJC) ##Gets the likelihood at no
 ##Returns
 ##            a            c            g            t 
 ## 0.0009738563 0.0282851014 0.0009738563 0.0282851014
-
-
-
 ```
 
 ####Putting It All Together
 Neat-o so we've got everything we need to read in the data, format it how we want it and then compute the likelihood at a site. Let's give it a go.
-```{r,warning=FALSE}
 
+```r
 ##load in functions and packages
 source("./challenge_fxns.R") ##load in the functions we wrote
 library(ape) 
@@ -379,7 +447,10 @@ stationary_freqs<-c(0.25,0.25,0.25,0.25)
 
 ##compute the likelihood
 siteLikelihood(tree,lik_seq,subst_probsJC,stationary_freqs)
+```
 
+```
+## [1] 0.001042563
 ```
 If we had longer sequences we would just repeat this process for each site and multiply those likelihoods together using the *AND* rule. Additionally, this process should work with more taxa. However, with more taxa or longer sequences we will need to worry more about underflow as we are not using log-likelihoods in our computation.
 
