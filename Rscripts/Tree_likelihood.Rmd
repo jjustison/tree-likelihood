@@ -1,8 +1,6 @@
 ---
 title: "Likelihood of a Tree"
-output: 
-  html_document:
-    keep_md: true
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
