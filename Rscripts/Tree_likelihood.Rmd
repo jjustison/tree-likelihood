@@ -98,7 +98,7 @@ str(seq)
 Here we can see that we have a list where each attribute in the list corresponds to one of our tip names. Then, within each list is our sequence information. Usually each attribute contains a vector of characters, however, we only read in an allignment with one character. 
 
 ##Preliminary functions
-Before we get into the meat and potatoes that is the pruning algorithm, we will need a few functions to make our lives easier. Examples of these functions will refer to the node and edge numbers that were plotted above so either be ready to scroll up to that tree or it may be handy to jot the tree down on a piece of scratch paper. Lastly, for brevity's sake I won't bother showing the code for the functions here, however, the interested reader can find the code along with explainations of the code in the *challenge_fxns.R*.
+Before we get into the meat and potatoes that is the pruning algorithm, we will need a few functions to make our lives easier. Examples of these functions will refer to the node and edge numbers that were plotted above, so either be ready to scroll up to that tree or it may be handy to jot the tree down on a piece of scratch paper. Lastly, for brevity's sake I won't bother showing the code for the functions here. The interested reader can find the code along with explainations of the code in the *challenge_fxns.R*.
 
 * `isTip(phy,nd)`: this function returns `TRUE` if the given node is a tip and `FALSE` otherwise.This function has two inputs:
     + $phy$: the phylogenetic tree  
@@ -362,7 +362,7 @@ Neat-o so we've got everything we need to read in the data, format it how we wan
 ```{r,warning=FALSE}
 
 ##load in functions and packages
-source("./challenge_fxns.R") ##load in the functions we wrote
+source("./challenge_fxns.R") ##load in the functions
 library(ape) 
 
 ##read in files 
@@ -379,7 +379,7 @@ stationary_freqs<-c(0.25,0.25,0.25,0.25)
 siteLikelihood(tree,lik_seq,subst_probsJC,stationary_freqs)
 
 ```
-If we had longer sequences we would just repeat this process for each site and multiply those likelihoods together using the *AND* rule. Additionally, this process should work with more taxa. However, with more taxa or longer sequences we will need to worry more about underflow as we are not using log-likelihoods in our computation.
+If we had longer sequences we would just repeat this process for each site and multiply those likelihoods together using the *AND* rule. Additionally, this process should work with more taxa. However, with more taxa or longer sequences we will need to worry more about underflow as we are not using log-likelihoods in our calculations.
 
 Nonethless, We've computed the likelihood of the tree given our sequence data and assuming Jukes Cantor model for sequence evolution.
 
