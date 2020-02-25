@@ -46,7 +46,7 @@ when we used the `str()` function we could see that the tree was of class *phylo
 
 * **edge:** This is a matrix that denotes the topology of the tree and how the branches of our tree connect to nodes. Each row of the matrix corresponds to an branch and the two columns correspond to the two nodes for that branch.
 * **edge.length:** This is a vector of edge lengths. Each element corresponds to a row in the *edge* matrix. E.g. the 3^rd^ element in the *edge.length* attribute corresponds to the branch in the 3^rd^ row of the *edge* matrix.
-* **Nnode:** The number of internal nodes in the tree. For a root  bifurcating tree with $n$ tips we should have $n-1$ nodes so this checks out.
+* **Nnode:** The number of internal nodes in the tree. For a rooted bifurcating tree with $n$ tips we should have $n-1$ nodes so this checks out.
 * **tip.label:**A vector of the tip names are stored here. Each element corresponds to the node numbered with that index. E.g. the 2^nd^ element in *tip.label* corresponds to the name of the node that is numbered $2$
 
 We can access the indivudal attributes of the tree by typing our variable followed by *$* and then the name of the attribute. For example:
@@ -66,7 +66,7 @@ We can also plot our tree along with its branch lengths to check if we loaded th
 The Newick format for this tree is `((t1:0.1,t2:0.1):0.1,t3:0.1);`, so it looks like the tree is correct.
 
 
-From the *edge* attribute we can see that nodes and branches are numbered. Alternatively, we can plot the node and edge numberings on the tree.
+Alternatively, we can plot the node and edge numberings on the tree. These node and edge numberings correspond to what is in the *edge* matrix. 
 ```{r}
 {
   plot(tree,show.tip.label = FALSE)
@@ -169,7 +169,7 @@ lik_seq
 
 ```
 
-* `nodeLikelihood(l1,l2,v1,v2,sub_model=subst_probsJC)`: This function computes the conditional probability of each nucleotide for the ancestral node given the likelihood of the nucleotides at the ancestral nodes and given the branch lengths that lead to each ancestral node. The likelihood of the ancestor node, denoted $anc$, for a given base $i$ is computed as follows:
+* `nodeLikelihood(l1,l2,v1,v2,sub_model=subst_probsJC)`: This function computes the conditional probability of each nucleotide for the ancestral node given the likelihood of the nucleotides at the descendent nodes and given the branch lengths that lead to each ancestral node. The likelihood of the ancestor node, denoted $anc$, for a given base $i$ is computed as follows:
 $$
 \ell_{anc}(i) = \left(\sum_{j} p_{ij} (\nu_{d1})\ell_{d1}(j) \right)*\left(\sum_{j} p_{ij} (\nu_{d2})\ell_{d2}(j) \right)
 $$
@@ -372,7 +372,7 @@ seq<-read.nexus.data("../data/challenge_data.nex")
 ##Format sequence data to a format we can use
 lik_seq<-siteSeqs2Likelihood(seq,1)
 
-##assume stationary frequencies are all 0.25
+##stationary frequencies are all 0.25
 stationary_freqs<-c(0.25,0.25,0.25,0.25)
 
 ##compute the likelihood
