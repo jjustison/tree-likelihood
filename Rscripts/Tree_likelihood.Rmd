@@ -28,7 +28,7 @@ seq<-read.nexus.data("../data/challenge_data.nex")
 
 Cool beans! Now let's see how the data are represented in R. Let's start with the tree.
 
-###The Tree
+### The Tree
 
 ```{r}
 
@@ -90,14 +90,14 @@ We can see that the second row, denoted by $[2,]$, has $5$ and $1$ in the column
 
 We can also notice that the ordering the columns matters. Node numbers that appear in the first column of the edge matrix are considered the ancestral node of the branch while node numbers in the second column are considered the descendant node of the branch. We can easily see that $5$ is the ancestor, or parent, node for edge $2$ while node $1$ is the descendent, or child, of the branch. Pretty slick!
 
-###The Sequence Data
+### The Sequence Data
 Similar things can be done for the sequence data to get a feel for how it is represented.
 ```{r}
 str(seq)
 ```
 Here we can see that we have a list where each attribute in the list corresponds to one of our tip names. Then, within each list is our sequence information. Usually each attribute contains a vector of characters, however, we only read in an allignment with one character. 
 
-##Preliminary functions
+## Preliminary functions
 Before we get into the meat and potatoes that is the pruning algorithm, we will need a few functions to make our lives easier. Examples of these functions will refer to the node and edge numbers that were plotted above, so either be ready to scroll up to that tree or it may be handy to jot the tree down on a piece of scratch paper. Lastly, for brevity's sake I won't bother showing the code for the functions here. The interested reader can find the code along with explainations of the code in the *challenge_fxns.R*.
 
 * `isTip(phy,nd)`: this function returns `TRUE` if the given node is a tip and `FALSE` otherwise.This function has two inputs:
@@ -119,7 +119,7 @@ getChildren(tree,2) ##The node is a tip and has no children. Returns NULL
 ```    
 
 
-* `getBranchLength(phy,nd)`: This function returns the length of the branch the leads to the parent of a given node. This function has two inputs:
+* `getBranchLength(phy,nd)`: This function returns the length of the branch between a given node and its parent. This function has two inputs:
     + $phy$: the phylogenetic tree  
     + $nd$: the number of the node that we are interested in
 ```{r,eval=FALSE}
@@ -155,9 +155,9 @@ A_T<-subst_probsJC("a","t",0.5)  #A to T
 A_A+A_C+A_G+A_T ##Returns 1. This is a sanity check. The probability of transitioning from A to any other base should be 1.
 ```  
 
-* `siteSeqs2Likelihood(alignment, site_no)`: This function take the observed nucleotide data at the tips for a given site and converts it into a likelihood format that our other functions can use to compute likelihoods for internal nodes. This function has two inputs:
+* `siteSeqs2Likelihood(alignment, site_no)`: This function takes the observed nucleotide data at the tips for a given site and converts it into a likelihood format that our other functions can use to compute likelihoods for internal nodes. This function has two inputs:
     + $alignment$: a list of aligned sequences  
-    + $site\_no$: the position of the alignment that we want ot put into a likelihood format 
+    + $site\_no$: the position of the alignment that we want to put into a likelihood format 
 ```{r}
 
 ###Example###
@@ -203,9 +203,9 @@ node5_lik
 
 ```
 
-##The Pruning Algorithm
+## The Pruning Algorithm
 
-###Doing the Algorithm Manually
+### Doing the Algorithm Manually
 
 We should now have all the infrastructure we need to compute the site likelihood. All we need to do for this is:
   
@@ -245,7 +245,7 @@ root_lik #These numbers look like what we saw in class!
 
 ```
 
-So we've calculated the likelihood for each base, now for step 2. we need to multiply these by their stationary frequencies. The Jukes Cantor model assumes stationary frequencies of $A=C=G=T=0.25$. After we do this multiplication we only need to sum the values together to get the site likelihood
+So we've calculated the likelihood for each base, now for step 2. We need to multiply these by their stationary frequencies. The Jukes Cantor model assumes stationary frequencies of $A=C=G=T=0.25$. After we do this multiplication we only need to sum the values together to get the site likelihood
 
 ```{r}
 stationary_freqs<-c(0.25,0.25,0.25,0.25) ##The stationary frequencies are all 0.25
@@ -256,13 +256,13 @@ site_lik  #what a beaut
 
 
 ```
-We done did it! Although we did the calculations by hand, hopefully this example gives somewhat of an idea for how this process can be applied more generally. Because, while this may be somewhat easy to do for a single site with 3 taxa, doing these calculations manually quickly becomes cumbersome as the number of taxa and length of sequences grow. We will want to write a recursive algorithm to automate the process of going thru the nodes to compute likelihoods and slowly work our way to the root.
+We done did it! Although we did the calculations by hand, hopefully this example gives somewhat of an idea for how this process can be applied more generally. Because, while this may be somewhat easy to do for a single site with 3 taxa, doing these calculations manually quickly becomes cumbersome as the number of taxa and length of sequences grow. We will want to write a recursive algorithm to automate the process of going through the nodes to compute likelihoods and slowly work our way to the root.
 
 
 ### Doing The Pruning Algorithm Recursively
 
 
-####Wrapper For The Recursive Function
+#### Wrapper For The Recursive Function
 Let's start by first writing a wrapper function that does some of the housekeeping things that we need at the start as well as doing the computations at the end. We will call this function `siteLikelihood()` and it will have 4 inputs:
   
   + $phy$: the phylogenetic tree  
@@ -292,17 +292,17 @@ siteLikelihood<-function(phy,tip_lik,sub_model,stat_freqs){
 ```
 This wrapper function is actually pretty short and sweet. However, we still need to define our recursive function, `getLikeLihoodRecursive()`. If we assume it works properly we can see that we are just getting the likelihood at the root and doing the same calculations as when we did things manually.
 
-####A Bit On Recursion
+#### A Bit On Recursion
 
 Before writing the recursive function, it may be helpful to go over recursion. They're just a fancy way of saying that it is a function that calls itself somewhere in the code.  Khan academy has a good [explaination of recursion](https://www.khanacademy.org/computing/computer-science/algorithms/recursive-algorithms/a/recursive-factorial) where they recursively compute the factorial of a number. But briefly, when the recursive call is made, it is done in a way that breaks the problem into a smaller **subproblem**. Recursive calls continue to be made to divide into smaller and smaller subproblems until it reaches what is called the **base case**. The base case is a state where we know the answer to the subproblem. The answer in the base case is then used to compute the answer in the subproblems and subsequently to solve our initial problem.
 
-Not useful to us at all but here is a fun display of [recursion being abused to make fractals in PowerPoint](https://www.youtube.com/watch?v=O8l_awjgoMI&feature=youtu.be&t=111). Or if recursion really has you jazzed up, you may want to consider learning a [purely functional](https://en.wikipedia.org/wiki/Functional_programming#Recursion) programming langauge as these don't have `for` or `while` loops and instead rely solely on recursion for iterative processes. 
+Not useful to us at all but here is a fun display of [recursion being abused to make fractals in PowerPoint](https://www.youtube.com/watch?v=O8l_awjgoMI&feature=youtu.be&t=111). Or if recursion really has you jazzed up, you may want to consider learning a [purely functional](https://en.wikipedia.org/wiki/Functional_programming#Recursion) programming language as these don't have `for` or `while` loops and instead rely solely on recursion for iterative processes. 
 
-####The Recursive Function For The Pruning Algorithm
+#### The Recursive Function For The Pruning Algorithm
 
 Alright, now onto the function. `getLikelihoodRecursive()` will get us the likelihood for each nucleotide at the node that we specify. The function has 4 inputs:
   
-  + $nd$: This is the number of the node that we will compute the likelihood of each base 
+  + $nd$: This is the number of the node for which we will compute the likelihood of each nucleotide 
   + $phy$: the phylogenetic tree  
   + $tip\_lik$: the sequence data of the tips, all in the likelihood format given by `siteSeqs2Likelihood()`
   + $sub\_model$: A substitution model for sequence evolution.
@@ -314,7 +314,7 @@ getLikelihoodRecursive<-function(nd,phy,tip_lik,sub_model){
   
   ##First we want to check if we are at a tip. This is our Base Case.
   if(isTip(phy,nd)){
-    ##If we are at a tip then getting the likelihood is as simple as getting the the values from tip_lik
+    ##If we are at a tip then getting the likelihood is as simple as getting the values from tip_lik
     lik<-tip_lik[[phy$tip.label[nd]]]
   }
   else{ ##we are at an internal node 
@@ -357,7 +357,7 @@ getLikelihoodRecursive(5,tree,lik_seq,subst_probsJC) ##Gets the likelihood at no
 
 ```
 
-####Putting It All Together
+#### Putting It All Together
 Neat-o so we've got everything we need to read in the data, format it how we want it and then compute the likelihood at a site. Let's give it a go.
 ```{r,warning=FALSE}
 
@@ -381,6 +381,6 @@ siteLikelihood(tree,lik_seq,subst_probsJC,stationary_freqs)
 ```
 If we had longer sequences we would just repeat this process for each site and multiply those likelihoods together using the *AND* rule. Additionally, this process should work with more taxa. However, with more taxa or longer sequences we will need to worry more about underflow as we are not using log-likelihoods in our calculations.
 
-Nonethless, We've computed the likelihood of the tree given our sequence data and assuming Jukes Cantor model for sequence evolution.
+Nonetheless, We've computed the likelihood of the tree given our sequence data and assuming Jukes Cantor model for sequence evolution.
 
 
