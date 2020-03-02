@@ -28,7 +28,7 @@ seq<-read.nexus.data("../data/challenge_data.nex")
 
 Cool beans! Now let's see how the data are represented in R. Let's start with the tree.
 
-###The Tree
+### The Tree
 
 ```{r}
 
@@ -90,14 +90,14 @@ We can see that the second row, denoted by $[2,]$, has $5$ and $1$ in the column
 
 We can also notice that the ordering the columns matters. Node numbers that appear in the first column of the edge matrix are considered the ancestral node of the branch while node numbers in the second column are considered the descendant node of the branch. We can easily see that $5$ is the ancestor, or parent, node for edge $2$ while node $1$ is the descendent, or child, of the branch. Pretty slick!
 
-###The Sequence Data
+### The Sequence Data
 Similar things can be done for the sequence data to get a feel for how it is represented.
 ```{r}
 str(seq)
 ```
 Here we can see that we have a list where each attribute in the list corresponds to one of our tip names. Then, within each list is our sequence information. Usually each attribute contains a vector of characters, however, we only read in an allignment with one character. 
 
-##Preliminary functions
+## Preliminary functions
 Before we get into the meat and potatoes that is the pruning algorithm, we will need a few functions to make our lives easier. Examples of these functions will refer to the node and edge numbers that were plotted above, so either be ready to scroll up to that tree or it may be handy to jot the tree down on a piece of scratch paper. Lastly, for brevity's sake I won't bother showing the code for the functions here. The interested reader can find the code along with explainations of the code in the *challenge_fxns.R*.
 
 * `isTip(phy,nd)`: this function returns `TRUE` if the given node is a tip and `FALSE` otherwise.This function has two inputs:
@@ -203,9 +203,9 @@ node5_lik
 
 ```
 
-##The Pruning Algorithm
+## The Pruning Algorithm
 
-###Doing the Algorithm Manually
+### Doing the Algorithm Manually
 
 We should now have all the infrastructure we need to compute the site likelihood. All we need to do for this is:
   
@@ -262,7 +262,7 @@ We done did it! Although we did the calculations by hand, hopefully this example
 ### Doing The Pruning Algorithm Recursively
 
 
-####Wrapper For The Recursive Function
+#### Wrapper For The Recursive Function
 Let's start by first writing a wrapper function that does some of the housekeeping things that we need at the start as well as doing the computations at the end. We will call this function `siteLikelihood()` and it will have 4 inputs:
   
   + $phy$: the phylogenetic tree  
@@ -292,13 +292,13 @@ siteLikelihood<-function(phy,tip_lik,sub_model,stat_freqs){
 ```
 This wrapper function is actually pretty short and sweet. However, we still need to define our recursive function, `getLikeLihoodRecursive()`. If we assume it works properly we can see that we are just getting the likelihood at the root and doing the same calculations as when we did things manually.
 
-####A Bit On Recursion
+#### A Bit On Recursion
 
 Before writing the recursive function, it may be helpful to go over recursion. They're just a fancy way of saying that it is a function that calls itself somewhere in the code.  Khan academy has a good [explaination of recursion](https://www.khanacademy.org/computing/computer-science/algorithms/recursive-algorithms/a/recursive-factorial) where they recursively compute the factorial of a number. But briefly, when the recursive call is made, it is done in a way that breaks the problem into a smaller **subproblem**. Recursive calls continue to be made to divide into smaller and smaller subproblems until it reaches what is called the **base case**. The base case is a state where we know the answer to the subproblem. The answer in the base case is then used to compute the answer in the subproblems and subsequently to solve our initial problem.
 
 Not useful to us at all but here is a fun display of [recursion being abused to make fractals in PowerPoint](https://www.youtube.com/watch?v=O8l_awjgoMI&feature=youtu.be&t=111). Or if recursion really has you jazzed up, you may want to consider learning a [purely functional](https://en.wikipedia.org/wiki/Functional_programming#Recursion) programming language as these don't have `for` or `while` loops and instead rely solely on recursion for iterative processes. 
 
-####The Recursive Function For The Pruning Algorithm
+#### The Recursive Function For The Pruning Algorithm
 
 Alright, now onto the function. `getLikelihoodRecursive()` will get us the likelihood for each nucleotide at the node that we specify. The function has 4 inputs:
   
@@ -357,7 +357,7 @@ getLikelihoodRecursive(5,tree,lik_seq,subst_probsJC) ##Gets the likelihood at no
 
 ```
 
-####Putting It All Together
+#### Putting It All Together
 Neat-o so we've got everything we need to read in the data, format it how we want it and then compute the likelihood at a site. Let's give it a go.
 ```{r,warning=FALSE}
 
