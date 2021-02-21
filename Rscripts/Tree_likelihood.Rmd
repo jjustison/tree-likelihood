@@ -40,7 +40,7 @@ str(tree)##We can see the attributes and class of our tree by using the str() fu
 
 ```
 
-By printing out the tree we can see that we have a rooted tree with 3 tips and branch lengths, this is what we want and a good sanity check.
+By printing out the tree we can see that we have a rooted tree with 3 tips and branch lengths, this is what we want and a good check for correctness.
 
 when we used the `str()` function we could see that the tree was of class *phylo* and had 4 attributes:
 
@@ -152,7 +152,7 @@ A_A<-subst_probsJC("a","a",0.5)  #A to A
 A_C<-subst_probsJC("a","c",0.5)  #A to C
 A_G<-subst_probsJC("a","g",0.5)  #A to G
 A_T<-subst_probsJC("a","t",0.5)  #A to T
-A_A+A_C+A_G+A_T ##Returns 1. This is a sanity check. The probability of transitioning from A to any other base should be 1.
+A_A+A_C+A_G+A_T ##Returns 1. This is a check for correctness. The probability of transitioning from A to any other base should be 1.
 ```  
 
 * `siteSeqs2Likelihood(alignment, site_no)`: This function take the observed nucleotide data at the tips for a given site and converts it into a likelihood format that our other functions can use to compute likelihoods for internal nodes. This function has two inputs:
